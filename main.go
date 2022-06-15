@@ -25,7 +25,7 @@ func NewWorld(width, height int) *World {
 		width:  width,
 		height: height,
 		center: linalg.Vec3{},
-		zoom:   4.0,
+		zoom:   12.0,
 	}
 	return w
 }
@@ -46,10 +46,10 @@ func (w *World) Draw(pix []byte) {
 	}
 	p := start
 	maxIter := 20
+	a, b, c := -0.5, 1., -0.1
 	for y := 0; y < w.height; y++ {
 		for x := 0; x < w.width; x++ {
-			z := linalg.Vec3{X: 0, Y: 0, Z: 0}
-			ans := iterate(z, p, maxIter)
+			ans := iterate(a, b, c, p, maxIter)
 			if ans == 0 {
 				w.setPixel(pix, x, y, color.Black)
 			} else {
@@ -71,11 +71,14 @@ func (w *World) setPixel(pix []byte, x, y int, c color.Color) {
 	pix[4*i+3] = byte(a)
 }
 
-func iterate(z, position linalg.Vec3, maxIter int) int {
+// f_0(x, y) = a x^2 + b xy + c y^2
+// f_n+1(x, y) = f_n(x, y)^2 + (a x^2 + b xy + c y^2)
+func iterate(a, b, c float64, position linalg.Vec3, maxIter int) int {
+	q := a*position.X*position.X + b*position.X*position.Y + c*position.Y*position.Y
+	z := 0.0
 	for i := 0; i < maxIter; i++ {
-		z = z.Multiply2D(z).Add(position)
-		l := z.Length()
-		if l > 2 {
+		z = z*z + q
+		if z > 100000000 {
 			return i + 1
 		}
 	}
