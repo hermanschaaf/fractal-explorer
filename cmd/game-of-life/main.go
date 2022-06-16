@@ -141,20 +141,14 @@ func (w *World) solve2(prev, next []bool, depth int) bool {
 		}
 	}
 	fixed := make([]bool, w.width*w.height)
-	mem := make(map[string]bool)
-	return w.solve2inner(prev, next, fixed, live, 0, 0, depth, mem)
+	return w.solve2inner(prev, next, fixed, live, 0, 0, depth)
 }
 
-func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUpTo int, depth int, mem map[string]bool) bool {
-	key := fmt.Sprintf("%v-%v-%v-%d-%d", prev, next, fixed, i, fixedUpTo)
-	if v, ok := mem[key]; ok {
-		return v
-	}
-
+func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUpTo int, depth int) bool {
 	if i >= len(live) {
-		mem[key] = w.allok(prev, next)
-		return mem[key]
+		return w.allok(prev, next)
 	}
+	log.Println(i, fixedUpTo)
 	//
 	//for y := 0; y < w.height; y++ {
 	//	for x := 0; x < w.width; x++ {
@@ -181,14 +175,12 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 	x, y := l%w.width, l/w.width
 	pop := neighbourCount(prev, w.width, w.height, x, y)
 	if pop >= 4 {
-		mem[key] = false
-		return mem[key]
+		return false
 	}
 
 	// check fixed area for violations
 	if !w.fixedok(prev, fixed, next, l) {
-		mem[key] = false
-		return mem[key]
+		return false
 	}
 
 	changed := -1
@@ -206,17 +198,15 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 				n := w.addNeighbor(x, y, prev, fixed, z)
 				if n == -1 {
 					w.undoChange(changed, prev)
-					mem[key] = false
-					return mem[key]
+					return false
 				}
 
-				solved := w.solve2inner(prev, next, fixed, live, i, z+1, depth, mem)
+				solved := w.solve2inner(prev, next, fixed, live, i, z+1, depth)
 				if solved {
 					nextDepth := make([]bool, len(prev))
 					solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 					if solvedNextDepth {
-						mem[key] = true
-						return mem[key]
+						return true
 					}
 				}
 				// undo adding of neighbor
@@ -225,13 +215,12 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 		} else if pop == 2 {
 			// try and solve with no further changes (except for fixed cells)
 			changes := w.setFixedNeighborhood(x, y, fixed)
-			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth, mem)
+			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth)
 			if solved {
 				nextDepth := make([]bool, len(prev))
 				solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 				if solvedNextDepth {
-					mem[key] = true
-					return mem[key]
+					return true
 				}
 			}
 			w.undoFixedNeighborhood(fixed, changes)
@@ -241,16 +230,14 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 				n := w.addNeighbor(x, y, prev, fixed, z)
 				if n == -1 {
 					w.undoChange(changed, prev)
-					mem[key] = false
-					return mem[key]
+					return false
 				}
-				solved = w.solve2inner(prev, next, fixed, live, i, z+1, depth, mem)
+				solved = w.solve2inner(prev, next, fixed, live, i, z+1, depth)
 				if solved {
 					nextDepth := make([]bool, len(prev))
 					solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 					if solvedNextDepth {
-						mem[key] = true
-						return mem[key]
+						return true
 					}
 				}
 				// undo adding of neighbor
@@ -260,13 +247,12 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 			// only remaining case since we checked pop >= 4 before
 			// try and solve with no further changes (except for fixed cells)
 			changes := w.setFixedNeighborhood(x, y, fixed)
-			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth, mem)
+			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth)
 			if solved {
 				nextDepth := make([]bool, len(prev))
 				solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 				if solvedNextDepth {
-					mem[key] = true
-					return mem[key]
+					return true
 				}
 			}
 			w.undoFixedNeighborhood(fixed, changes)
@@ -289,16 +275,14 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 				n := w.addNeighbor(x, y, prev, fixed, z)
 				if n == -1 {
 					w.undoChange(changed, prev)
-					mem[key] = false
-					return mem[key]
+					return false
 				}
-				solved := w.solve2inner(prev, next, fixed, live, i, z+1, depth, mem)
+				solved := w.solve2inner(prev, next, fixed, live, i, z+1, depth)
 				if solved {
 					nextDepth := make([]bool, len(prev))
 					solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 					if solvedNextDepth {
-						mem[key] = true
-						return mem[key]
+						return true
 					}
 				}
 				// undo adding of neighbor
@@ -308,13 +292,12 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 			// only remaining case since we checked pop >= 4 before
 			// try and solve with no further changes (except for fixed cells)
 			changes := w.setFixedNeighborhood(x, y, fixed)
-			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth, mem)
+			solved := w.solve2inner(prev, next, fixed, live, i+1, 0, depth)
 			if solved {
 				nextDepth := make([]bool, len(prev))
 				solvedNextDepth := w.solve2(nextDepth, prev, depth-1)
 				if solvedNextDepth {
-					mem[key] = true
-					return mem[key]
+					return true
 				}
 			}
 			w.undoFixedNeighborhood(fixed, changes)
@@ -324,8 +307,7 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 	// ok, we didn't find a solution, so we give up at this point
 	w.undoChange(changed, prev)
 
-	mem[key] = false
-	return mem[key]
+	return false
 }
 
 func (w *World) undoChange(l int, prev []bool) {
