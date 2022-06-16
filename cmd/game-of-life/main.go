@@ -15,8 +15,8 @@ func init() {
 }
 
 const (
-	screenWidth  = 5
-	screenHeight = 5
+	screenWidth  = 9
+	screenHeight = 9
 	SearchDepth  = 1
 )
 
@@ -186,7 +186,7 @@ func (w *World) solve2inner(prev, next, fixed []bool, live []int, i int, fixedUp
 	}
 
 	// check fixed area for violations
-	if !w.fixedok(prev, fixed, next) {
+	if !w.fixedok(prev, fixed, next, l) {
 		mem[key] = false
 		return mem[key]
 	}
@@ -434,15 +434,18 @@ func (w *World) solve(prev, next []bool, r, c int) bool {
 	return false
 }
 
-func (w *World) fixedok(prev, fixed, wantNext []bool) bool {
+// fixedok checks if any violations occur in areas that are marked as "fixed". Anything to the
+// upper left of currentIndex and before will also be taken to be fixed.
+func (w *World) fixedok(prev, fixed, wantNext []bool, currentIndex int) bool {
 	width := w.width
 	height := w.height
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			l := y*width + x
+			isFixed := (l < currentIndex-width-1) || (fixed[l] && neighbourCount(fixed, width, height, x, y) == 8)
 			// this cell is completely surrounded by fixed cells
-			if fixed[l] && neighbourCount(fixed, width, height, x, y) == 8 {
+			if isFixed {
 				pop := neighbourCount(prev, width, height, x, y)
 				if wantNext[l] {
 					// alive in next; should have (pop == 2 and alive) or (pop == 3) in prev
